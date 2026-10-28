@@ -1,236 +1,118 @@
 # ระบบจองห้องประชุมภายในองค์กร (Meeting Room Booking System)
 
-เว็บแอปพลิเคชันระดับองค์กรสำหรับบริหารจัดการและจองห้องประชุม พัฒนาด้วย **React + TypeScript + Vite + Tailwind CSS + shadcn/ui + FullCalendar + Recharts + Supabase (Auth, Postgres, Realtime, RLS)**
+เว็บแอปพลิเคชันสำหรับบริหารจัดการและจองห้องประชุมภายในองค์กร พัฒนาด้วย **React + TypeScript + Vite + Tailwind CSS + FullCalendar + Recharts**
 
-รองรับภาษาไทยเป็นหลัก แสดงผลตามเขตเวลาไทย (`Asia/Bangkok` UTC+7) พร้อมปีพุทธศักราช (พ.ศ.) มีระบบป้องกันการจองทับซ้อนในระดับฐานข้อมูล ปฏิทินแสดงผล Real-time ศูนย์การแจ้งเตือน และระบบรายงานที่สามารถส่งออกข้อมูลเป็น **CSV (Excel รองรับภาษาไทยสมบูรณ์), XLSX และ PDF**
+ระบบทำงานแบบ **Standalone (ไม่ต้องต่อ Supabase หรือ Backend ภายนอก)** โดยมีฐานข้อมูลภายในตัว (Local Database ผ่าน LocalStorage) พร้อมข้อมูลจำลองตั้งต้นครบถ้วน รองรับการใช้งานจริงทุกฟังก์ชัน: จองห้อง, ตรวจสอบการชนกันของเวลา, อนุมัติ/ปฏิเสธคำขอ, ปฏิทินแสดงผล Real-time, ศูนย์การแจ้งเตือน, จัดการห้องประชุม และออกรายงานสถิติ (CSV, Excel, PDF)
 
 ---
 
-## 🌟 ฟังก์ชันและจุดเด่นของระบบ
+## 🌟 ฟังก์ชันหลักของระบบ (ไม่ต้องใช้ Supabase)
 
-### 1. ระบบควบคุมสิทธิ์และความปลอดภัย (Role-Based Access Control & RLS)
-- แบ่งผู้ใช้ออกเป็น 3 บทบาทหลัก:
-  - **Admin (ผู้ดูแลระบบ):** จัดการห้องประชุมทั้งหมด, เพิ่ม/แก้ไข/ปิดปรับปรุงห้อง, จัดการอุปกรณ์, ดูรายงานและ Audit Logs
-  - **Approver (ผู้อนุมัติ):** ตรวจสอบคำขอจองห้อง, อนุมัติ หรือปฏิเสธพร้อมระบุเหตุผล, เรียกดูสถิติ
-  - **User (ผู้ใช้ทั่วไป):** ค้นหาห้องว่าง, ยื่นคำขอจอง, ดูปฏิทิน, ตรวจสอบสถานะคำขอ และยกเลิกการจองของตนเอง
-- ควบคุมสิทธิ์ทั้งฝั่ง Frontend และ Backend ด้วย **Supabase Row Level Security (RLS)** และ PostgreSQL Stored Procedures
-- มีแถบสลับบทบาท (Role Switcher) ด้านบนของหน้าจอ ช่วยให้สามารถทดสอบมุมมองทั้ง 3 บทบาทได้ทันที
+### 1. ระบบผู้ใช้และสิทธิ์การใช้งาน (3 บทบาทในตัวเดียว)
+- สามารถกดสลับบทบาทได้ทันทีที่แถบเมนูด้านบน (Topbar):
+  - **Admin (ผู้ดูแลระบบ):** จัดการห้องประชุม (เพิ่ม/แก้ไข/ปิดปรับปรุง), จัดการอุปกรณ์, ดูรายงาน และ Audit Logs
+  - **Approver (ผู้อนุมัติ):** พิจารณาคำขอจองห้อง (อนุมัติ / ปฏิเสธพร้อมระบุเหตุผล), ดูสถิติ
+  - **User (ผู้ใช้งานทั่วไป):** ค้นหาห้องว่าง, ยื่นคำขอจอง, ดูปฏิทิน, ตรวจสอบสถานะ และยกเลิกการจองของตนเอง
+- มีประวัติผู้ใช้งานเริ่มต้น 3 ท่าน: สมชาย (Admin), อภิญญา (Approver), กิตติพงษ์ (User)
 
-### 2. แดชบอร์ดแบบ Real-time (Enterprise Dashboard)
-- แสดงข้อมูล KPI สรุปสถานะ:
-  - จำนวนห้องประชุมทั้งหมด
-  - จำนวนห้องว่างในขณะนี้
-  - จำนวนห้องที่กำลังใช้งาน
-  - จำนวนการจองวันนี้
-  - จำนวนคำขอรออนุมัติ
-  - จำนวนการจองที่ยกเลิก
-- กราฟแนวโน้มการจอง: สลับมุมมอง รายวัน, รายสัปดาห์ และรายเดือน (Recharts)
+### 2. แดชบอร์ดภาพรวม (Real-time Dashboard)
+- สรุปตัวเลข KPI: ห้องทั้งหมด, ห้องว่างขณะนี้, ห้องที่กำลังใช้งาน, การจองวันนี้, คำขอรออนุมัติ, การจองที่ยกเลิก
+- กราฟแนวโน้มการจอง (Recharts): สลับดูสถิติ **รายวัน, รายสัปดาห์, และรายเดือน**
 - กราฟอัตราการใช้งานของแต่ละห้อง (Room Utilization Rate)
-- ตารางรายการจองล่าสุด พร้อมปุ่มอนุมัติ/ปฏิเสธด่วนสำหรับ Approver
+- ตารางการจองล่าสุดพร้อมปุ่มอนุมัติ/ปฏิเสธด่วนสำหรับ Approver
 - บันทึกกิจกรรมระบบล่าสุด (Audit Logs)
 
-### 3. ระบบจองห้องประชุมและป้องกันการจองทับซ้อน (Anti-Overlap Engine)
+### 3. ระบบจองห้องประชุมและป้องกันเวลาชนกัน (Anti-Overlap Engine)
 - ตรวจสอบความถูกต้องด้วย **React Hook Form + Zod**
-- ระบุวัน, เวลาเริ่มต้น, เวลาสิ้นสุด, จำนวนผู้เข้าร่วม, รายชื่อผู้เข้าร่วม, เบอร์ติดต่อ, อุปกรณ์ที่ต้องการ
-- **กลไกป้องกันการชนกัน (Concurrency & Race Condition Guard):**
-  - ฝั่งฐานข้อมูล: ใช้ **PostgreSQL Exclusion Constraint** ผ่านส่วนขยาย `btree_gist`
-    ```sql
-    CONSTRAINT no_overlapping_bookings
-    EXCLUDE USING gist (
-        room_id WITH =,
-        tstzrange(start_time, end_time) WITH &&
-    ) WHERE (status IN ('pending', 'approved'))
-    ```
-  - ทั้งสถานะ **Pending (รออนุมัติ)** และ **Approved (อนุมัติแล้ว)** จะถูกกันเวลาไว้ทันที ทำให้ผู้ใช้อื่นไม่สามารถจองช่วงเวลาเดียวกันได้
-  - สโตว์โพรซีเยอร์ `create_booking_atomic` ใช้ `SELECT ... FOR UPDATE` เพื่อล็อกแถวป้องกันคลิกพร้อมกันในระดับมิลลิวินาที
-  - ตรวจสอบความจุห้อง (ไม่อนุญาตให้ผู้เข้าร่วมเกินความจุ)
-  - ไม่อนุญาตให้จองเวลาย้อนหลัง หรือเวลาสิ้นสุดน้อยกว่าเวลาเริ่มต้น
+- **ป้องกันการจองทับซ้อนอัตโนมัติ:** ไม่อนุญาตให้จองห้องเดียวกันในช่วงเวลาที่ซ้อนทับกับรายการที่อนุมัติแล้ว หรือรายการที่รออนุมัติอยู่
+- ตรวจสอบความจุห้อง (ไม่อนุญาตให้ผู้เข้าร่วมเกินความจุ)
+- ไม่อนุญาตให้จองเวลาย้อนหลัง หรือระบุเวลาสิ้นสุดน้อยกว่าเวลาเริ่มต้น
+- รองรับการขออุปกรณ์เพิ่มเติม และใส่รายชื่อผู้เข้าร่วมประชุม
 
-### 4. ปฏิทินการจอง (FullCalendar Integration)
-- มุมมอง รายเดือน (Month), รายสัปดาห์ (Week), และรายวัน (Day)
-- ตัวกรองแยกตามห้องประชุม และสถานะการจอง
-- แยกสีตามสถานะอย่างชัดเจน (เขียว = อนุมัติแล้ว, ส้ม = รออนุมัติ, น้ำเงิน = เสร็จสิ้น, แดง = ไม่อนุมัติ, เทา = ยกเลิก)
-- คลิกที่รายการเพื่อดูรายละเอียดแบบ Modal
-- คลิกที่ช่วงเวลาว่างเพื่อเริ่มเปิดฟอร์มจองโดยระบุวันเวลาให้อัตโนมัติ
+### 4. ปฏิทินการจองห้องประชุม (FullCalendar)
+- มุมมอง **รายเดือน (Month), รายสัปดาห์ (Week), และรายวัน (Day)**
+- กรองตามห้องประชุมและสถานะการจองได้
+- แยกสีตามสถานะชัดเจน (เขียว = อนุมัติแล้ว, ส้ม = รออนุมัติ, น้ำเงิน = เสร็จสิ้น, แดง = ไม่อนุมัติ, เทา = ยกเลิก)
+- คลิกรายการเพื่อดูรายละเอียด หรือคลิกช่วงเวลาว่างเพื่อเปิดฟอร์มจองทันที
+- แสดงผลวันเวลาตามเขตเวลาไทย (`Asia/Bangkok`) และปี พ.ศ.
 
-### 5. ศูนย์การแจ้งเตือน Real-time (Notification Center)
-- ไอคอนกระดิ่งพร้อม Badge แสดงจำนวนการแจ้งเตือนที่ยังไม่อ่าน
-- แจ้งเตือนเมื่อ: มีคำขอจองใหม่, ได้รับการอนุมัติ, ถูกปฏิเสธ (พร้อมแสดงเหตุผล), ยกเลิกการจอง, ใกล้ถึงเวลาเริ่มประชุม (ก่อน 30 นาที)
-- ปุ่มทำเครื่องหมายว่าอ่านแล้วรายรายการ และปุ่มอ่านทั้งหมด
-- ซิงก์ข้อมูลแบบ Real-time ผ่าน WebSocket Channel ของ Supabase
+### 5. ศูนย์การแจ้งเตือน (Notification Center)
+- แสดงไอคอนกระดิ่งพร้อม Badge จำนวนแจ้งเตือนที่ยังไม่ได้อ่าน
+- มีระบบจำลองการเตือนล่วงหน้า 30 นาทีก่อนเริ่มประชุม
+- กดทำเครื่องหมายว่าอ่านแล้วรายรายการ หรืออ่านทั้งหมดได้
 
 ### 6. ระบบรายงานและส่งออกข้อมูล (Reports & Export)
-- กรองตามช่วงวันที่, ห้องประชุม, ผู้จอง, และสถานะการจอง
-- สรุปชั่วโมงการใช้งานรวม และอัตราการจัดสรรพื้นที่ (Utilization %)
+- กรองข้อมูลตามช่วงวันที่, ห้องประชุม, ผู้จอง และสถานะ
+- สรุปชั่วโมงการใช้งานรวม และอัตราการจัดสรรพื้นที่ (%)
 - ส่งออกข้อมูลได้ 3 รูปแบบ:
-  - **CSV (Excel):** มีการแทรก UTF-8 BOM ทำให้เปิดใน Microsoft Excel แล้วภาษาไทยไม่เป็นภาษาต่างดาว
-  - **XLSX:** รูปแบบไฟล์ Excel มาตรฐาน
-  - **PDF:** จัดรูปแบบเป็นตารางสรุปรายงานพร้อมหัวเอกสาร
+  - **CSV (Excel):** แทรก UTF-8 BOM ทำให้เปิดใน Excel แล้วภาษาไทยไม่เพี้ยน
+  - **XLSX:** ไฟล์ Excel มาตรฐาน
+  - **PDF:** จัดทำเป็นตารางเอกสารรายงานทางการ
 
 ---
 
-## 🛠️ เทคโนโลยีที่ใช้ (Tech Stack)
-
-- **Frontend Framework:** React 19 + TypeScript + Vite 8
-- **Styling & UI:** Tailwind CSS v4 + ออกแบบตามมาตรฐาน shadcn/ui
-- **Icons:** Lucide React
-- **Calendar Engine:** FullCalendar (@fullcalendar/react, @fullcalendar/daygrid, @fullcalendar/timegrid, @fullcalendar/interaction)
-- **Charts:** Recharts
-- **Form & Validation:** React Hook Form + Zod
-- **Backend & Database:** Supabase (PostgreSQL 15+, Supabase Auth, Realtime)
-- **Exporting Tools:** SheetJS (xlsx), jsPDF, jsPDF-AutoTable
-- **Testing:** Vitest
-
----
-
-## 📁 โครงสร้างโปรเจกต์ (Project Structure)
+## 🛠️ โครงสร้างโฟลเดอร์
 
 ```
 meeting-room-booking/
+├── dist/                          # ไฟล์ที่ Build สำหรับนำไปขึ้น GitHub Pages ได้ทันที
+│   ├── index.html
+│   └── assets/
 ├── src/
-│   ├── types/
-│   │   └── database.types.ts       # Types สำหรับ Profiles, Rooms, Bookings, Notifications, Audit
+│   ├── types/database.types.ts    # Types สำหรับข้อมูลห้อง, การจอง, ผู้ใช้, กิจกรรม
 │   ├── lib/
-│   │   ├── supabase.ts             # การเชื่อมต่อ Supabase Client & Health Check
-│   │   ├── mockData.ts             # ข้อมูล Seed เริ่มต้นสำหรับโหมด Standalone / Offline
-│   │   ├── storage.ts              # Local Database & Overlap Prevention Logic
-│   │   └── utils.ts                # การจัดรูปแบบวันเวลาไทย (พ.ศ.) และฟังก์ชัน Export (CSV/XLSX/PDF)
+│   │   ├── storage.ts             # ฐานข้อมูลภายใน (Local Database & Overlap Engine)
+│   │   ├── mockData.ts            # ข้อมูลตั้งต้น 5 ห้องประชุม และประวัติการจอง
+│   │   └── utils.ts               # ฟังก์ชันจัดรูปแบบวันเวลาไทย และการ Export
 │   ├── context/
-│   │   ├── AuthContext.tsx         # Supabase Auth, Session, และ Role Switcher
-│   │   └── BookingContext.tsx      # Realtime State, CRUD การจอง, ห้อง, แจ้งเตือน, Audit
+│   │   ├── AuthContext.tsx        # ระบบผู้ใช้และปุ่มสลับบทบาท
+│   │   └── BookingContext.tsx     # ระบบจัดการการจอง, อนุมัติ, แจ้งเตือน
 │   ├── components/
-│   │   ├── common/
-│   │   │   ├── Navbar.tsx          # แถบเมนูด้านบน, นาฬิกาไทย, สถานะ DB, โปรไฟล์
-│   │   │   ├── Sidebar.tsx         # เมนูด้านข้างพร้อม Badge นับจำนวนรออนุมัติ
-│   │   │   ├── NotificationDropdown.tsx # ศูนย์แจ้งเตือน Real-time
-│   │   │   ├── StatusBadge.tsx     # ป้ายสถานะภาษาไทยมาตรฐาน
-│   │   │   ├── Modal.tsx           # หน้าต่าง Modal มาตรฐาน
-│   │   │   └── SupabaseSetupModal.tsx # หน้าต่างแนะนำการตั้งค่าฐานข้อมูล
-│   │   ├── dashboard/
-│   │   │   ├── DashboardView.tsx   # รวมวิดเจ็ตแดชบอร์ด
-│   │   │   ├── StatCard.tsx        # การ์ด KPI ตัวเลขสถิติ
-│   │   │   ├── BookingChart.tsx    # กราฟแท่งเปรียบเทียบแนวโน้ม (Recharts)
-│   │   │   ├── RoomUtilizationChart.tsx # กราฟอัตราใช้งานของแต่ละห้อง
-│   │   │   ├── RecentBookingsTable.tsx  # ตารางการจองล่าสุดพร้อมปุ่มอนุมัติด่วน
-│   │   │   └── RecentActivityList.tsx   # บันทึกกิจกรรม Audit Log
-│   │   ├── calendar/
-│   │   │   ├── CalendarView.tsx    # ปฏิทิน FullCalendar ภาษาไทย
-│   │   │   └── BookingDetailModal.tsx # รายละเอียดการจอง, ปุ่มอนุมัติ/ปฏิเสธ/ยกเลิก
-│   │   ├── booking/
-│   │   │   ├── BookingFormModal.tsx # ฟอร์มจองห้อง พร้อมเช็กการชนกันและอุปกรณ์
-│   │   │   └── MyBookingsList.tsx  # หน้าประวัติการจองของผู้ใช้
-│   │   ├── approvals/
-│   │   │   └── ApprovalsList.tsx   # หน้าสำหรับ Approver พิจารณาคำขอ
-│   │   ├── rooms/
-│   │   │   ├── RoomList.tsx        # จัดการห้องประชุม, กรองความจุ, เปิด/ปิดปรับปรุง
-│   │   │   └── RoomFormModal.tsx   # เพิ่ม/แก้ไขห้องประชุมและอุปกรณ์
-│   │   ├── reports/
-│   │   │   └── ReportsView.tsx     # หน้ารายงาน, กรองข้อมูล, ส่งออก CSV/Excel/PDF
-│   │   └── audit/
-│   │       └── AuditLogsView.tsx   # ตารางประวัติกิจกรรมและความปลอดภัย
-│   ├── test/
-│   │   └── bookingValidation.test.ts # ชุดทดสอบ Automated Test ด้วย Vitest
-│   ├── App.tsx                     # Main Layout & Tab Routing
-│   └── main.tsx                    # Entry Point
-├── supabase/
-│   ├── migrations/
-│   │   └── 20261028_meeting_room_schema.sql # SQL Migration สมบูรณ์ (ตาราง, RLS, Trigger, Lock)
-│   └── seed.sql                    # ข้อมูลห้องประชุมและอุปกรณ์ตัวอย่าง
-├── .env.example                    # ตัวอย่างการตั้งค่า Environment Variables
+│   │   ├── dashboard/             # แดชบอร์ด, KPI, กราฟ Recharts, ตารางล่าสุด
+│   │   ├── calendar/              # ปฏิทิน FullCalendar และ Modal ดูรายละเอียด
+│   │   ├── booking/               # ฟอร์มจองห้อง และหน้าประวัติการจองของฉัน
+│   │   ├── approvals/             # หน้าสำหรับ Approver ตรวจสอบและอนุมัติ
+│   │   ├── rooms/                 # หน้าจัดการห้องประชุม (Admin)
+│   │   ├── reports/               # หน้ารายงานและปุ่มส่งออก CSV/Excel/PDF
+│   │   └── audit/                 # ตารางบันทึกกิจกรรม Audit Logs
+│   ├── App.tsx
+│   └── main.tsx
+├── .github/workflows/deploy.yml   # Workflow สำหรับ GitHub Pages อัตโนมัติ
+├── vite.config.ts                 # ตั้งค่า base: './' สำหรับ GitHub Pages
 └── package.json
 ```
 
 ---
 
-## 🚀 วิธีติดตั้งและรันโปรเจกต์ (Installation & Quick Start)
+## 🚀 วิธีแก้หน้าจอขาวบน GitHub Pages (`aksarin19.github.io/booking-meeting`)
 
-### 1. ความต้องการของระบบ (Prerequisites)
-- Node.js version 18.0 ขึ้นไป (แนะนำ LTS)
-- npm หรือ pnpm
+เนื่องจากบน GitHub Pages จำเป็นต้องใช้ไฟล์ที่ผ่านการ Build แล้ว (ไม่ใช่ไฟล์ `.tsx` ดิบ) ท่านสามารถทำได้ง่าย ๆ ตามวิธีใดวิธีหนึ่งดังนี้:
 
-### 2. ขั้นตอนการติดตั้ง
+### ✅ วิธีที่ 1 (ง่ายและเร็วที่สุด): นำไฟล์จากโฟลเดอร์ `dist` ไปวางที่ GitHub
+1. เปิดเข้าไปในโฟลเดอร์:
+   `C:\Users\TL\.gemini\antigravity\scratch\meeting-room-booking\dist`
+2. คัดลอกทุกไฟล์ข้างใน (ได้แก่ `index.html` และโฟลเดอร์ `assets/`)
+3. นำไปอัปโหลดทับไฟล์ที่หน้าแรกของ GitHub Repository `Aksarin19/booking-meeting`
+4. รอประมาณ 30 วินาที แล้วรีเฟรชหน้าเว็บ `https://aksarin19.github.io/booking-meeting/` ระบบจะติดและใช้งานได้ทันที 100%!
+
+### ✅ วิธีที่ 2: ให้ GitHub Actions ทำการ Build ให้อัตโนมัติ
+1. อัปโหลดโค้ดทั้งหมด (รวมถึงโฟลเดอร์ `.github/` และ `src/`) ขึ้น GitHub
+2. ไปที่ GitHub Repository ของคุณ -> **Settings** -> **Pages**
+3. ตรงหัวข้อ **Source** ให้เปลี่ยนเป็น **GitHub Actions**
+4. ระบบจะทำการรันคำสั่ง build และนำขึ้นเว็บให้อัตโนมัติทุกครั้งที่อัปเดตโค้ด
+
+---
+
+## 💻 วิธีรันบนเครื่องคอมพิวเตอร์ของคุณ (Local Development)
+
 ```bash
 # 1. เข้าสู่โฟลเดอร์โปรเจกต์
 cd meeting-room-booking
 
-# 2. ติดตั้ง Dependencies
+# 2. ติดตั้ง Dependencies (ถ้ายังไม่ได้ติดตั้ง)
 npm install --legacy-peer-deps
 
-# 3. รัน Development Server
+# 3. รันโปรเจกต์
 npm run dev
 ```
-
 เปิดเบราว์เซอร์ไปที่: `http://localhost:5173`
-
-> 💡 **หมายเหตุ:** ระบบมีฐานข้อมูลจำลองและข้อมูล Seed ตั้งต้นมาให้พร้อมใช้งานทันที ทำให้สามารถเปิดทดลองฟังก์ชันได้ครบ 100% แม้ยังไม่ได้ใส่ Supabase API Keys และเมื่อใส่ Key ในไฟล์ `.env.local` ระบบจะเชื่อมต่อไปยัง Live PostgreSQL อัตโนมัติ
-
----
-
-## 🗄️ การตั้งค่า Supabase และการสร้างฐานข้อมูล (Supabase Setup Guide)
-
-### ขั้นตอนที่ 1: สร้างโปรเจกต์ Supabase
-1. เข้าไปที่ [supabase.com](https://supabase.com) แล้วล็อกอินเข้าสู่ระบบ
-2. กดปุ่ม **"New Project"** ตั้งชื่อโปรเจกต์และรหัสผ่านฐานข้อมูล
-3. เลือก Region ที่ใกล้ประเทศไทย เช่น **Singapore (ap-southeast-1)**
-
-### ขั้นตอนที่ 2: รัน SQL Migration
-1. ในหน้า Supabase Dashboard ไปที่เมนูด้านซ้ายเลือก **"SQL Editor"**
-2. กด **"New query"**
-3. คัดลอกเนื้อหาทั้งหมดจากไฟล์:
-   ```
-   supabase/migrations/20261028_meeting_room_schema.sql
-   ```
-   ไปวางใน SQL Editor แล้วกดปุ่ม **"Run"**
-   *(สคริปต์นี้จะสร้างตาราง `profiles`, `rooms`, `room_equipment`, `bookings`, `booking_attendees`, `notifications`, `audit_logs` พร้อมทั้ง Index, RLS Policies, Triggers และ Exclusion Constraints ให้ครบถ้วน)*
-
-### ขั้นตอนที่ 3: ลงข้อมูลเริ่มต้น (Seed Data)
-1. ใน SQL Editor สร้าง Query ใหม่อีกอัน
-2. คัดลอกเนื้อหาจากไฟล์:
-   ```
-   supabase/seed.sql
-   ```
-   ไปวางแล้วกดปุ่ม **"Run"** เพื่อสร้างห้องประชุมและอุปกรณ์ตัวอย่าง
-
-### ขั้นตอนที่ 4: ตั้งค่า Environment Variables
-1. ใน Supabase Dashboard ไปที่ **Project Settings -> API**
-2. คัดลอกค่า **Project URL** และ **Project API Keys (anon public)**
-3. สร้างไฟล์ `.env.local` ในโฟลเดอร์รากของโปรเจกต์:
-   ```env
-   VITE_SUPABASE_URL=https://your-project-id.supabase.co
-   VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-   ```
-4. รีสตาร์ต dev server:
-   ```bash
-   npm run dev
-   ```
-5. แถบสถานะด้านบนจะเปลี่ยนเป็น **🟢 "Supabase Connected"**
-
----
-
-## 🧪 การทดสอบระบบ (Running Tests)
-
-โปรเจกต์มีชุดทดสอบ Unit & Validation Test ครอบคลุมฟังก์ชันการป้องกันการจองทับซ้อน, การตรวจสอบความถูกต้องของเวลา, และการจัดรูปแบบภาษาไทย
-
-รันการทดสอบด้วยคำสั่ง:
-```bash
-npx vitest run
-```
-
----
-
-## 📦 การ Build และ Deploy สู่ Production
-
-### Build โปรเจกต์
-```bash
-npm run build
-```
-ผลลัพธ์ของไฟล์ Production Bundle จะอยู่ในโฟลเดอร์ `dist/`
-
-### การ Deploy บน Vercel หรือ Netlify
-1. เชื่อมต่อ Git Repository กับ Vercel หรือ Netlify
-2. กำหนด Build Command: `npm run build`
-3. กำหนด Output Directory: `dist`
-4. ตั้งค่า Environment Variables ในหน้า Dashboard ของผู้ให้บริการ:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-5. กด Deploy ระบบจะพร้อมใช้งานแบบสาธารณะทันที
